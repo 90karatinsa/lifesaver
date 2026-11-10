@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Kalkan -->
+    <path android:fillColor="#FF3B30"
+        android:pathData="M54,26 L74,34 L74,54 C74,66 66,76 54,82 C42,76 34,66 34,54 L34,34 Z" />
+    <!-- Nabiz cizgisi -->
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3.2"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M40,55 L47,55 L50,47 L55,63 L59,55 L68,55" />
+</vector>

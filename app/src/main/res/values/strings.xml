@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LifeSaver</string>
+    <string name="channel_guard_name">Koruma etkin</string>
+    <string name="channel_guard_desc">Koruma açıkken kalıcı olarak görünen bildirim</string>
+    <string name="channel_alert_name">Acil durum alarmı</string>
+    <string name="channel_alert_desc">Bir olay algılandığında çalan alarm</string>
+</resources>

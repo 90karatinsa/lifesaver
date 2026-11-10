@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ============ Sürekli izleme ============ -->
+    <!-- Arka planda sensör okumanın TEK yolu ön plan servisidir: Android 9'dan
+         beri arka plandaki bir uygulama ivmeölçer olayı ALMAZ. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Ekran kapalıyken ivmeölçer olaylarının akmaya devam etmesi için.
+         Bu cihazın ivmeölçeri wake-up DEĞİL: kısmi wake lock olmadan
+         SoC uykuya dalar ve FIFO taşınca en eski örnekler KAYBOLUR. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Adım algılayıcı: telefonun taşınıp taşınmadığını anlamak için.
+         "Masadaki telefon düştü" yanlış alarmını elemenin temeli budur. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- ============ Konum ============ -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- İSTEĞE BAĞLI: yalnızca yeniden başlatmadan sonra kullanıcı elle
+         kurmadan korumanın devam etmesi isteniyorsa. Play bunun için ayrı
+         beyan formu ve tanıtım videosu ister. Uygulama bu izin OLMADAN da
+         tam çalışır; kullanıcı "koru" düğmesine basarak kurar. -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- ============ Yardım çağırma ============ -->
+    <!-- Yakınlara SMS. 112'ye SMS de bu izinle gider (Türkiye'de 112'ye SMS
+         gerçek bir kanaldır ama otomatik konum İÇERMEZ; koordinat gövdede). -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <!-- Yakınları (normal numaraları) otomatik aramak için.
+         112'yi otomatik aramak bu izinle DE mümkün değildir: AOSP Telecom
+         acil numaraya giden ACTION_CALL'ı iptal edip sistem çeviricisini açar. -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+
+    <!-- ============ Alarm yüzeyi ============ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Kilitli ekranda tam ekran alarmı göstermenin izin gerektirmeyen TEK
+         yolu tam ekran niyet bildirimidir. API 34+ bu izin varsayılan olarak
+         yalnızca arama/alarm uygulamalarına verilir; kullanıcı ayarlardan
+         vermezse alarm ekranı HİÇ açılmaz. Onboarding bunu kontrol eder. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Alarm ses seviyesini yükseltmek için. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- ============ Dayanıklılık ============ -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Fener: setTorchMode CAMERA izni GEREKTİRMEZ, yalnızca donanım ister. -->
+    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.barometer" android:required="false" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
+    <!-- Android 11+ paket görünürlüğü: bu bildirim olmadan uygulama cihazda
+         KURULU TTS motorlarını GÖREMEZ ve queryIntentServices boş döner.
+         Cihazın varsayılan motoru bozuksa yedeğe geçebilmek için gereklidir. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".LifeSaverApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.LifeSaver"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.LifeSaver">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Hızlı ayarlar döşemesi: kipi bildirimsiz, iki dokunuşla
+             değiştirir. Koruma kapalıyken de çalışır. -->
+        <service
+            android:name=".ui.ModeTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_notification"
+            android:label="LifeSaver kipi"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Kip seçici.
+             Bildirimdeki "Kip değiştir" düğmesinden açılır. showWhenLocked:
+             kip genelde araca binerken, telefon kilitliyken değiştirilir;
+             kilidi açmayı zorunlu kılmak kullanıcının kipi hiç
+             değiştirmemesine yol açar. Kilit AÇILMAZ, yalnızca bu ekran
+             kilit ekranının üstünde gösterilir. -->
+        <activity
+            android:name=".ui.ModePickerActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true"
+            android:taskAffinity=".modepicker"
+            android:theme="@style/Theme.LifeSaver" />
+
+        <!-- Alarm ekranı.
+             showWhenLocked + turnScreenOn: kilit ekranının ÜSTÜNDE gösterilir
+             ve ekranı uyandırır. Kilidi AÇMAZ — güvenli kilit ekranı bir
+             uygulama tarafından kaldırılamaz ve buna gerek de yoktur.
+             Bu iki nitelik, kullanımdan kaldırılmış pencere bayraklarının
+             yerine geçen güncel yoldur. -->
+        <activity
+            android:name=".ui.AlertActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:taskAffinity=".alert"
+            android:theme="@style/Theme.LifeSaver.Alert" />
+
+        <!-- Koruma servisi.
+             Tip maskesi ÇALIŞMA ZAMANINDA belirlenir: konum izni yoksa
+             'location' tipiyle startForeground SecurityException atar.
+             Bu yüzden manifest her ikisini de beyan eder, kod hangisinin
+             yasal olduğuna karar verir. -->
+        <service
+            android:name=".GuardianService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse|location"
+            android:stopWithTask="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Continuous on-device motion sensing to detect that the user has been incapacitated by a fall, vehicle or motorcycle crash, or man-overboard event, and to summon help on their behalf." />
+        </service>
+
+        <!-- Etkinlik tanıma sonuçları. Hız üretilemeyen yerlerde
+             (tünel, kapalı otopark) kaza algılamanın silahlanmasını sağlar. -->
+        <receiver
+            android:name=".VehicleActivityReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.lifesaver.ACTIVITY_UPDATE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true"
+            android:directBootAware="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

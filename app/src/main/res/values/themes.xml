@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.LifeSaver" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0B0F14</item>
+        <item name="android:statusBarColor">#0B0F14</item>
+        <item name="android:navigationBarColor">#0B0F14</item>
+    </style>
+    <!-- Alarm ekrani: kirmizi zemin, sistem cubuklari gizli. -->
+    <style name="Theme.LifeSaver.Alert" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#7F0000</item>
+        <item name="android:statusBarColor">#7F0000</item>
+        <item name="android:navigationBarColor">#7F0000</item>
+        <item name="android:windowShowWallpaper">false</item>
+    </style>
+</resources>
